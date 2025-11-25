@@ -3,11 +3,29 @@ package main
 import "fmt"
 
 func isValidParentheses(s string) bool {
-	stack := []byte(s)
+	if len(s)%2 == 1 {
+		return false
+	}
+	stack := []byte{}
 
-	for _, alpha := range s {
-		if alpha == "{" || alpha == "(" || alpha == "[":{
+	tail := -1
+	for idx, _ := range s {
+		alpha := s[idx] // byte _是rune-int32
+		if alpha == '{' || alpha == '(' || alpha == '[' {
 			stack = append(stack, alpha)
+			tail++
+		} else if alpha == '}' && tail > -1 && stack[tail] == '{' {
+			stack = stack[:tail]
+			tail--
+		} else if alpha == ')' && tail > -1 && stack[tail] == '(' {
+			stack = stack[:tail]
+			tail--
+		} else if alpha == ']' && tail > -1 && stack[tail] == '[' {
+			stack = stack[:tail]
+			tail--
+		} else {
+			stack = append(stack, alpha)
+			tail++
 		}
 	}
 
@@ -15,6 +33,6 @@ func isValidParentheses(s string) bool {
 }
 
 func main() {
-	res := isValidParentheses("()")
+	res := isValidParentheses("(")
 	fmt.Println(res)
 }
