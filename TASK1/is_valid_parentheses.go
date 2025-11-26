@@ -7,20 +7,16 @@ func isValidParentheses(s string) bool {
 		return false
 	}
 	stack := []byte{}
+	pairMap := map[byte]byte{
+		'}': '{',
+		')': '(',
+		']': '[',
+	}
 
 	tail := -1
 	for idx, _ := range s {
-		alpha := s[idx] // byte _是rune-int32
-		if alpha == '{' || alpha == '(' || alpha == '[' {
-			stack = append(stack, alpha)
-			tail++
-		} else if alpha == '}' && tail > -1 && stack[tail] == '{' {
-			stack = stack[:tail]
-			tail--
-		} else if alpha == ')' && tail > -1 && stack[tail] == '(' {
-			stack = stack[:tail]
-			tail--
-		} else if alpha == ']' && tail > -1 && stack[tail] == '[' {
+		alpha := s[idx]                                 // byte _是rune-int32
+		if tail > -1 && pairMap[alpha] == stack[tail] { // 右找左
 			stack = stack[:tail]
 			tail--
 		} else {
@@ -33,6 +29,6 @@ func isValidParentheses(s string) bool {
 }
 
 func main() {
-	res := isValidParentheses("(")
+	res := isValidParentheses("()[][]({(())})")
 	fmt.Println(res)
 }
