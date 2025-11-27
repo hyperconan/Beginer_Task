@@ -20,18 +20,27 @@ func normal(nums []int) int {
 }
 
 func removeDuplicates(nums []int) int {
-	return normal(nums)
+	//return normal(nums)
+	return slowFast(nums)
 }
 
 func slowFast(nums []int) int {
-	slow, fast := 0, 0
+	//慢指针用于替换元素，快指针用于查找元素
+	slow, fast := 0, 1
 	length := len(nums)
 	for ; fast < length; fast++ {
-		
+		refNum := nums[slow]
+		if nums[fast] == refNum {
+			continue
+		}
+		slow++
+		nums[slow] = nums[fast]
 	}
+	nums = nums[:slow+1]
+	return slow + 1
 }
 
 func main() {
-	res := removeDuplicates([]int{2, 2})
+	res := removeDuplicates([]int{1, 2, 2, 3, 3, 4})
 	fmt.Println(res)
 }
