@@ -30,11 +30,10 @@ func slowFast(nums []int) int {
 	length := len(nums)
 	for ; fast < length; fast++ {
 		refNum := nums[slow]
-		if nums[fast] == refNum {
-			continue
+		if nums[fast] != refNum {
+			slow++
+			nums[slow] = nums[fast]
 		}
-		slow++
-		nums[slow] = nums[fast]
 	}
 	nums = nums[:slow+1]
 	return slow + 1
