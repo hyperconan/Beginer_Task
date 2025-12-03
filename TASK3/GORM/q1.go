@@ -71,15 +71,34 @@ func insertData() {
 
 func queryPostAndCommentViaUser(username string) {
 	//使用Gorm查询某个用户发布的所有文章及其对应的评论信息。
+	//posts := []Post{}
+	//db.
+	//	Joins("LEFT JOIN users ON posts.user_id = users.id").
+	//	Preload("Comments").
+	//	Where("users.name = ?", username).
+	//	Find(&posts)
+
+	//posts := []Post{}
 	user := User{}
-	db.Joins("Posts").Joins("Comments").Joins("Users").Find(&user, "user.name = ?", username)
+	db.
+		Preload("Posts.Comments").
+		Where("name = ?", username).
+		Find(&user)
+
 	for _, post := range user.Posts {
-		fmt.Println(post.Title)
 		for _, comment := range post.Comments {
-			fmt.Println(comment.Title)
+			fmt.Printf("Post Title: %s, Comment Title: %s, Comment Content: %s \n", post.Title, comment.Title, comment.Content)
 		}
 	}
 }
+
+//func getMaxCommentCountPost(){
+//	post := Post{}
+//	/*
+//	select count(1) comment_num,posts.id from posts.id = comments.post_id group by posts.id order by comment_num desc
+//	 */
+//	db.
+//}
 
 func main() {
 	init_db()
