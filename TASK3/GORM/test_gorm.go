@@ -114,18 +114,24 @@ func queryPostAndCommentViaUser(username string) {
 	//	Where("users.name = ?", username).
 	//	Find(&posts)
 
-	//posts := []Post{}
-	user := User{}
-	db.
-		Preload("Posts.Comments").
-		Where("name = ?", username).
-		Find(&user)
+	posts := []Post{}
+	sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return tx.
+			Preload("Posts.Comments").Find(&posts)
+	})
+	fmt.Println(sql)
 
-	for _, post := range user.Posts {
-		for _, comment := range post.Comments {
-			fmt.Printf("Post Title: %s, Comment Title: %s, Comment Content: %s \n", post.Title, comment.Title, comment.Content)
-		}
-	}
+	//user := User{}
+	//db.
+	//	Preload("Posts.Comments").
+	//	Where("name = ?", username).
+	//	Find(&user)
+	//
+	//for _, post := range user.Posts {
+	//	for _, comment := range post.Comments {
+	//		fmt.Printf("Post Title: %s, Comment Title: %s, Comment Content: %s \n", post.Title, comment.Title, comment.Content)
+	//	}
+	//}
 }
 
 func getMaxCommentCountPost() {

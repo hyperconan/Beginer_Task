@@ -5,25 +5,23 @@ import (
 	"net/http"
 	"time"
 
-	"hyperconan.com/blog_sys/base"
+	"hyperconan.com/blog_sys/internal/app"
 )
-import _ "hyperconan.com/blog_sys/orms"
 
 func main() {
 	fmt.Println("hello world!")
 	//启动方式1
-	//base.Router.Run(":7913")
+	//app.Router.Run(":7913")
 
 	//启动方式2
 	s := &http.Server{
 		Addr:         ":7913",
-		Handler:      base.Router,
+		Handler:      app.Router,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 	s.ListenAndServe()
 
 	// 启动方式3
-	//http.ListenAndServe(":7913", base.Router)
-
+	//http.ListenAndServe(":7913", app.Router)
 }

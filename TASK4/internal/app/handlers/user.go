@@ -1,15 +1,15 @@
-package modules
+package handlers
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	"hyperconan.com/blog_sys/orms"
+	"hyperconan.com/blog_sys/internal/dao"
 )
 
 func UserRegister(c *gin.Context) {
-	var user orms.User
+	var user dao.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -22,7 +22,7 @@ func UserRegister(c *gin.Context) {
 	}
 	user.Password = string(hashedPassword)
 
-	if err := orms.Db.Create(&user).Error; err != nil {
+	if err := dao.Db.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
@@ -31,7 +31,7 @@ func UserRegister(c *gin.Context) {
 }
 
 func UserLogin(c *gin.Context) {
-	user := orms.User{}
+	user := dao.User{}
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

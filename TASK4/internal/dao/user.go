@@ -1,7 +1,6 @@
-package orms
+package dao
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -33,8 +32,8 @@ func (u *User) IsValidUser() bool {
 func (u *User) GetJWToken() (string, error) {
 	// 生成JWT token
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":       u.ID,
 		"username": u.Username,
-		"sub":      fmt.Sprintf("%s", u.Password[:5]),
 		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	}).SignedString([]byte("hyperconan"))
 	return token, err

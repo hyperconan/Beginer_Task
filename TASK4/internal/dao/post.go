@@ -1,4 +1,4 @@
-package orms
+package dao
 
 import "gorm.io/gorm"
 
