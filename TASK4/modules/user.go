@@ -8,9 +8,7 @@ import (
 	"hyperconan.com/blog_sys/orms"
 )
 
-var db = orms.Db
-
-func Register(c *gin.Context) {
+func UserRegister(c *gin.Context) {
 	var user orms.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -24,7 +22,7 @@ func Register(c *gin.Context) {
 	}
 	user.Password = string(hashedPassword)
 
-	if err := db.Create(&user).Error; err != nil {
+	if err := orms.Db.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
@@ -32,7 +30,7 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
 }
 
-func Login(c *gin.Context) {
+func UserLogin(c *gin.Context) {
 	user := orms.User{}
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -43,21 +41,15 @@ func Login(c *gin.Context) {
 		return
 	}
 
-
-
-	// 验证密码
-	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(user.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
-		return
-	}
-
 	// 生成 JWT
-	token :=
-	storedUser.
-		tokenString, err := token.SignedString([]byte("your_secret_key"))
+	token, err := user.GetJWToken()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
-	// 剩下的逻辑...
+	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+func Test(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "test success"})
 }
