@@ -12,4 +12,13 @@ func init() {
 	userRouter.POST("/register", modules.UserRegister)
 	userRouter.POST("/login", modules.UserLogin)
 	userRouter.GET("/test", modules.Test)
+
+	blogRouter := Router.Group("/blog")
+	blogRouter.POST("/create", modules.CreatePost)
+	blogRouter.GET("/all", modules.GetAllPosts)
+	blogRouter.POST("/update", modules.UpdatePost)
+	blogRouter.POST("/delete", modules.DeletePost)
+	blogRouter.POST("/comment", modules.PostComment)
+	blogRouter.GET("/comments/:post_id", modules.GetCommentsByPostID)
+
 }
