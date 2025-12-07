@@ -19,8 +19,8 @@ func init() {
 	blogRouter := Router.Group("/blog")
 	blogRouter.Use(middleware.JWTAuthMiddleware()) // 应用JWT中间件
 	blogRouter.POST("/", handlers.CreatePost)
-	blogRouter.PUT("/", handlers.UpdatePost)
-	blogRouter.DELETE("/", handlers.DeletePost)
+	blogRouter.PUT("/:post_id", handlers.UpdatePost)
+	blogRouter.DELETE("/:post_id", handlers.DeletePost)
 
 	Router.GET("/blog/all", handlers.GetAllPosts)
 

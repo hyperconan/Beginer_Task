@@ -76,14 +76,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// 将 jwt.MapClaims 转换为 map[string]any
-		// 因为 jwt.MapClaims 是 map[string]any 的类型别名，需要显式转换
-		userInfo := make(map[string]any)
-		for k, v := range claims {
-			userInfo[k] = v
-		}
-
-		c.Set("user_info", userInfo)
+		c.Set("user_info", claims)
 
 		c.Next()
 	}

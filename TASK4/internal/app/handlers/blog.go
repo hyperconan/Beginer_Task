@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"hyperconan.com/blog_sys/internal/dao"
 )
 
@@ -17,7 +19,7 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	// 判断从 Context 中获取的 user_info 是否是 map[string]any 的几种方式：
+	// 判断从 Context 中获取的 user_info 是否是 jwt.MapClaims 的几种方式：
 
 	// 方式1：使用类型断言（推荐，两步完成）
 	// value, exists := c.Get("user_info")
@@ -25,7 +27,7 @@ func CreatePost(c *gin.Context) {
 	//     c.JSON(http.StatusInternalServerError, gin.H{"error": "用户信息不存在"})
 	//     return
 	// }
-	// userInfo, ok := value.(map[string]any)
+	// userInfo, ok := value.(jwt.MapClaims)
 	// if !ok {
 	//     c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户信息"})
 	//     return
@@ -37,7 +39,7 @@ func CreatePost(c *gin.Context) {
 	//     c.JSON(http.StatusInternalServerError, gin.H{"error": "用户信息不存在"})
 	//     return
 	// }
-	// userInfo, ok := value.(map[string]any)
+	// userInfo, ok := value.(jwt.MapClaims)
 	// if !ok {
 	//     c.JSON(http.StatusInternalServerError, gin.H{"error": "用户信息类型不匹配"})
 	//     return
@@ -50,7 +52,7 @@ func CreatePost(c *gin.Context) {
 	//     return
 	// }
 	// switch v := value.(type) {
-	// case map[string]any:
+	// case jwt.MapClaims:
 	//     userInfo := v
 	//     // 使用 userInfo
 	//     _ = userInfo
@@ -66,7 +68,7 @@ func CreatePost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户信息不存在"})
 		return
 	}
-	userInfo, ok := value.(map[string]any)
+	userInfo, ok := value.(jwt.MapClaims)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户信息"})
 		return
@@ -77,20 +79,7 @@ func CreatePost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户ID"})
 		return
 	}
-	// JWT 中的数字通常被解析为 float64，需要转换
-	var userID uint
-	switch v := uid.(type) {
-	case float64:
-		userID = uint(v)
-	case uint:
-		userID = v
-	case int:
-		userID = uint(v)
-	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户ID类型不正确"})
-		return
-	}
-	post.UserID = userID
+	post.UserID = uint(uid.(float64)) // uid为interface{},需要进行断言 转换为 float64 再转换为 uint
 	if err := dao.Db.Create(&post).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Post"})
 		return
@@ -126,17 +115,20 @@ func UpdatePost(c *gin.Context) {
 
 func DeletePost(c *gin.Context) {
 	var post dao.Post
-	if err := c.ShouldBindJSON(&post); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	postID := c.Param("post_id")
+	if postID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "post_id is required"})
 		return
 	}
+	pid, _ := strconv.Atoi(postID)
+	post.ID = uint(pid)
 
 	userinfo, exists := c.Get("user_info")
 	if !exists {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户信息不存在"})
 		return
 	}
-	value, ok := userinfo.(map[string]any)
+	value, ok := userinfo.(jwt.MapClaims)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户信息"})
 		return
@@ -146,22 +138,9 @@ func DeletePost(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户ID"})
 		return
 	}
+	uid = uint(uid.(float64)) // uid为interface{},需要进行断言 转换为 float64 再转换为 uint
 
-	// JWT 中的数字通常被解析为 float64，需要转换
-	var userID uint
-	switch v := uid.(type) {
-	case float64:
-		userID = uint(v)
-	case uint:
-		userID = v
-	case int:
-		userID = uint(v)
-	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户ID类型不正确"})
-		return
-	}
-
-	if err := dao.Db.Delete(&post, "id = ? and user_id = ?", post.ID, userID).Error; err != nil {
+	if err := dao.Db.Delete(&post, "user_id = ?", uid).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete Post"})
 		return
 	}
