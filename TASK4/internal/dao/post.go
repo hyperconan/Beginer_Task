@@ -1,6 +1,8 @@
 package dao
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Post struct {
 	//存储博客文章信息，包括 id 、 title 、 content 、 user_id （关联 users 表的 id ）、 created_at 、 updated_at 等字段。
@@ -19,4 +21,12 @@ func getAllPosts() ([]Post, error) {
 	var posts []Post
 	err := Db.Omit("Content").Find(&posts).Error
 	return posts, err
+}
+
+func (post *Post) AfterDelete(tx *gorm.DB) error {
+	comms := Comment{}
+	if err := Db.Delete(&comms, "post_id = ?", post.ID).Error; err != nil {
+		return err
+	}
+	return nil
 }

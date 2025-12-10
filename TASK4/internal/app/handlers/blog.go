@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"hyperconan.com/blog_sys/internal/dao"
+	"hyperconan.com/blog_sys/tools"
 )
 
 // 博客模块 实现文章的创建、读取、更新、删除功能、发表评论和评论读取
@@ -63,23 +63,12 @@ func CreatePost(c *gin.Context) {
 
 	// 实际使用：方式1（最简洁）
 	// 注意：c.Get() 返回 (value, exists)，需要先接收这两个值
-	value, exists := c.Get("user_info")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户信息不存在"})
+	uid, err := tools.GetUserIdFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	userInfo, ok := value.(jwt.MapClaims)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户信息"})
-		return
-	}
-
-	uid, ok := userInfo["id"]
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户ID"})
-		return
-	}
-	post.UserID = uint(uid.(float64)) // uid为interface{},需要进行断言 转换为 float64 再转换为 uint
+	post.UserID = uid
 	if err := dao.Db.Create(&post).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Post"})
 		return
@@ -98,12 +87,39 @@ func GetAllPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"posts": posts})
 }
 
+type updatePostReq struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+}
+
 func UpdatePost(c *gin.Context) {
-	var post dao.Post
-	if err := c.ShouldBindJSON(&post); err != nil {
+	pid := c.Param("post_id")
+	if pid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "post_id is required"})
+		return
+	}
+
+	reqBody := updatePostReq{}
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	pidInt, _ := strconv.Atoi(pid)
+	post := dao.Post{}
+
+	uid, err := tools.GetUserIdFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	dao.Db.Where("id = ? and user_id = ?", pidInt, uid).First(&post)
+	if post.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		return
+	}
+
+	post.Title = reqBody.Title
+	post.Content = reqBody.Content
 
 	if err := dao.Db.Save(&post).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Post"})
@@ -123,22 +139,11 @@ func DeletePost(c *gin.Context) {
 	pid, _ := strconv.Atoi(postID)
 	post.ID = uint(pid)
 
-	userinfo, exists := c.Get("user_info")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户信息不存在"})
+	uid, err := tools.GetUserIdFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
-	}
-	value, ok := userinfo.(jwt.MapClaims)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户信息"})
-		return
-	}
-	uid, ok := value["id"]
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户ID"})
-		return
-	}
-	uid = uint(uid.(float64)) // uid为interface{},需要进行断言 转换为 float64 再转换为 uint
+	} // uid为interface{},需要进行断言 转换为 float64 再转换为 uint
 
 	if err := dao.Db.Delete(&post, "user_id = ?", uid).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete Post"})
@@ -154,7 +159,12 @@ func PostComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	uid, err := tools.GetUserIdFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	comment.UserID = uid
 	if err := dao.Db.Create(&comment).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Comment"})
 		return
