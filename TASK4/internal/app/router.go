@@ -23,9 +23,8 @@ func init() {
 	blogRouter.DELETE("/:post_id", handlers.DeletePost)
 
 	Router.GET("/blog/all", handlers.GetAllPosts)
+	Router.GET("/blog/comment/:post_id", handlers.GetCommentsByPostID)
 
 	commentRouter := blogRouter.Group("/comment")
 	commentRouter.POST("/", handlers.PostComment)
-	commentRouter.GET("/:post_id", handlers.GetCommentsByPostID)
-
 }

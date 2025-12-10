@@ -21,5 +21,14 @@ func GetUserIdFromContext(c *gin.Context) (uint, error) {
 	if !ok {
 		return 0, errors.New("无法获取用户ID")
 	}
-	return uint(uid.(float64)), nil
+	switch v := uid.(type) {
+	case float64:
+		return uint(v), nil
+	case int:
+		return uint(v), nil
+	case uint:
+		return v, nil
+	default:
+		return 0, errors.New("用户ID类型不正确")
+	}
 }

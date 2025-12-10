@@ -6,10 +6,15 @@ import (
 	"time"
 
 	"hyperconan.com/blog_sys/internal/app"
+	"hyperconan.com/blog_sys/internal/pkg/logger"
 )
 
 func main() {
+	logger.Init()
+	defer logger.Sync()
+
 	fmt.Println("hello world!")
+	logger.S.Infow("starting server", "addr", ":7913")
 	//启动方式1
 	//app.Router.Run(":7913")
 
@@ -20,7 +25,9 @@ func main() {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	s.ListenAndServe()
+	if err := s.ListenAndServe(); err != nil {
+		logger.S.Errorw("server stopped with error", "err", err)
+	}
 
 	// 启动方式3
 	//http.ListenAndServe(":7913", app.Router)

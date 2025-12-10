@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"hyperconan.com/blog_sys/internal/app/response"
 )
 
 const (
@@ -20,9 +21,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// 从请求头获取token
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "缺少Authorization请求头",
-			})
+			response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "缺少Authorization请求头", nil)
 			c.Abort()
 			return
 		}
@@ -30,9 +29,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// 检查Bearer前缀
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authorization格式错误，应为: Bearer <token>",
-			})
+			response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "Authorization格式错误，应为: Bearer <token>", nil)
 			c.Abort()
 			return
 		}
@@ -50,18 +47,14 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 
 		// 检查token是否有效
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "无效的token: " + err.Error(),
-			})
+			response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "无效的token: "+err.Error(), err)
 			c.Abort()
 			return
 		}
 
 		// 检查token是否有效且未过期
 		if !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "token无效或已过期",
-			})
+			response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "token无效或已过期", nil)
 			c.Abort()
 			return
 		}
@@ -69,9 +62,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// 提取claims
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "无法解析token claims",
-			})
+			response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "无法解析token claims", nil)
 			c.Abort()
 			return
 		}
